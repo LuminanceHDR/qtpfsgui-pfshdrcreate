@@ -1,0 +1,16 @@
+11-29-2006 Giuseppe Rota <grota@users.sourceforge.net>
+
+* Released first public version. Branched from pfscalibration 1.3.
+* integrated class Array2DImplUCHAR that stores uchars and not float, this
+reduces memory footprint.
+* Removed src/dcraw2hdrgen* (we do not support raw image files yet)
+* icipi06.h and icip06.cpp kept for future integration.
+* Modified flow of execution in pfshdrcalibrate(int, char*) in order to let the
+user decide the weights of confidence over pixel values, the response
+function, and the model used to create the hdr
+* added debevec model
+* added triangular and plateau weighting functions.
+
+12-03-2006 Giuseppe Rota <grota@users.sourceforge.net>
+* Changed name of pfscalibration2 into pfshdrcreate, renamed
+executables and manpages

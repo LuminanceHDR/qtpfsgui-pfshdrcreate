@@ -1,0 +1,162 @@
+This is the README file for pfshdrcreate package.
+-------------------------------------------------------------------
+Copyright (C) 2006 Giuseppe Rota, <grota@users.sourceforge.net>
+
+
+Contents
+---------
+
+0. What it is
+1. Dependencies
+2. Compilation
+3. Documentation
+4. Contact and Links
+
+
+0. What it is
+---------------------------------------------------------------------
+This is a branch of the pfscalibration package created by Grzegorz
+Krawczyk, which is hosted on:
+http://www.mpii.mpg.de/resources/hdr/calibration/pfs.html
+Without his and Rafal Mantiuk's work all of this would
+have never been possible.
+
+The main purpose of this package is to create an HDR image starting
+from a set of pictures of the same scene taken with different
+exposure settings. This program is used as a backend in the software
+Qtpfsgui, but it can also be used as a standalone console application.
+
+The differences with the original pfscalibration package include a
+different algorithm to create hdr images (i.e. debevec model), and
+a different memory system, that reduces the memory footprint.
+In case you need to perform reliable camera calibration, the only
+set of commandline switchs that should be used are:
+-r calibrate -m robertson -w gaussian -s filename_for_response_curve.m
+
+The software maintains bytestream compatibility with pfstools, and
+that means that its hdr pfs output bytestream can be used with
+the existing pfstools/pfstmo programs; for example you can use:
+
+pfsinhdrgen sample.hdrgen | pfshdrcreate -v | pfstmo_reinhard02
+
+In case you are planning to use pfshdrcreate directly, using
+the commandline interface as shown in the example above, and not
+as a backend of qtpfsgui, please bear in mind that the command
+line parameters are different from pfscalibration;
+see the manpage of pfshdrcreate or the Documentation section below.
+
+pfshdrcreate does not support RAW camera formats yet.
+
+
+1. Dependencies
+-------------------------------------------------------------------
+
+This package is implemented using floating-point pipe streaming
+implemented in pfstools library. PFStools is a free library and can be
+obtained from: http://www.mpi-sb.mpg.de/resources/pfstools/
+
+If you want to use qtpfsgui you will also need the package pfstmo
+available at: http://www.mpii.mpg.de/resources/tmo even if pfstmo
+is not a direct dependency of pfshdrcreate.
+
+
+2. Compilation
+---------------------------------------------------------------------
+
+2.1 To build from a 'tar' archive:
+
+> ./configure <options>
+
+for example following command will configure the package to be installed
+in user's 'local/' directory:
+
+> ./configure --prefix=$HOME/local
+
+then compile
+
+> make
+
+and install
+
+> make install
+
+NOTE0: you can also issue the command "make install-strip"
+if you want to strip your executables before installing them.
+
+NOTE1: When you specify a different compiler using for example
+CXX=g++-3.2, libtool may incorrectly interpret compiler and use gcc
+instead of g++ to link the pfs library. This results in reallocation
+error in programs that link dynamically to that library. This is
+probably a bug in the libtool.
+
+NOTE: Automake 1.6 or later is required!
+
+2.2 To build from CVS:
+
+> ./reconf
+
+or
+
+> aclocal
+> libtoolize
+> autoheader
+> automake --add-missing
+> autoreconf
+
+then proceed as in the case of the 'tar' archive distribution.
+
+
+3. Documentation
+-------------------------------------------------------------------
+
+Documentation for pfshdrcreate can be found in this README and in
+the manpages for the single tools:
+> man pfshdrcreate
+> man jpeg2hdrgen
+> man pfsinhdrgen
+The original README from the pfscalibration package is also included
+(README.originalpfscalibation). That can be useful if you want to
+use pfshdrcreate as a commandline tool, and not as a backend for
+Qtpfsgui.
+
+Here I will describe the behaviour of pfshdrcreate.
+pfshdrcreate has 3 main sets of options that can be set:
+weighting function, response curve and hdr creation model.
+
+Specifying the weighting function means specifying the shape of
+the curve that assigns confidence in pixel values.
+use one of the following:
+-w triangular (default if not specified)
+-w gaussian
+-w plateau
+
+Specifying the response curve means specifying the correspondence
+between pixel values and radiance values in the scene.
+use one of the following:
+-r gamma (default if not specified)
+-r linear
+-r log
+-r calibrate ( recovers the response curve from the image set )
+-f filename ( loads a response curve from file; response curves are saved
+using the -s filename switch )
+
+The third and last set of parameters specifies the hdr creation model
+that will be used:
+use one of the following:
+-m debevec (default if not specified)
+-m robertson
+
+
+4. Contact and Links
+-------------------------------------------------------------------
+
+All comments and suggestions concerning this package or implementation
+of particular algorithm are very welcome. Please report bugs and
+comments to Giuseppe Rota <grota@users.sourceforge.net>.
+
+See also:
+PFStools library:
+http://www.mpii.mpg.de/resources/pfstools/
+
+PFStmo web-page (a tone mapping library):
+http://www.mpii.mpg.de/resources/tmo/

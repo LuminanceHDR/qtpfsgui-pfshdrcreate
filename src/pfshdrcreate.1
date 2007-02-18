@@ -1,0 +1,116 @@
+.TH "pfshdrcreate" "1" "" "" ""
+.SH "NAME"
+pfshdrcreate \- Create an HDR image or calibrate a response curve
+from a set of differently exposed images supplied in PFS stream.
+
+.SH "SYNOPSIS"
+.B pfshdrcreate 
+[\-\-weights <type>]
+[\-\-response <type>]|[\-\-response\-file <filename.m>]
+[\-\-model <type>]
+[\-\-save\-response filename.m>]
+[\-\-bpp <val>]
+[\-\-gauss <val>]
+[\-\-help][\-\-verbose]
+
+.SH "DESCRIPTION"
+Create an HDR image or calibrate a response curve from a set of
+differently exposed images supplied in PFS stream.
+
+\-\-weights: triangular|gaussian|plateau    (default: triangular)
+
+\-\-response: linear|gamma|log|calibrate    (default: gamma)
+
+\-\-model: debevec|robertson                (default: debevec)
+
+pfshdrcreate is a fork of the program pfshdrcalibrate contained 
+in the package pfscalibration. It uses a smaller memory footprint 
+and contains the debevec algorithm used to create HDR images, in
+addition to the robertson's one.
+
+The PFS bytestream is compatible with the one used in the pfstools/pfstmo
+projects.
+
+The commandline interface used in pfshdrcreate (described here)
+is different from the one used in pfshdrcalibrate.
+
+.SH "OPTIONS"
+.TP 
+\-\-weights <type>, \-w <type>
+
+Sets the function that assigns the confidence to pixel values 
+(a weighting function). 
+<type> is one of "triangular", "gaussian", "plateau".
+Default is triangular.
+
+.TP 
+\-\-response <type>, \-r <type>
+
+Allows to choose from predefined response curves. 
+<type> is one of "linear", "gamma", "log", "calibrate".
+"calibrate" means that the response curve will be obtained 
+from the image set. Default is "gamma".
+
+.TP 
+\-\-model <type>, \-m <type>
+
+Allows to choose one of two hdr\-creation models:
+<type> is one of "debevec", "robertson".
+
+.TP 
+\-\-gauss <val>, \-g <val>
+
+Sigma value for the Gaussian used as a weighting function.
+Default value: 8.0f
+
+.TP 
+\-\-save\-response <filename.m>, \-s <filename.m>
+
+Saves the response curve calculated during automatic self\-calibration
+stage in a matlab format file. Can be later reused for set of images
+captured with given camera. Also works fine for plotting with gnuplot.
+
+.TP 
+\-\-bpp <val>, \-b <val>
+
+Number of bits per pixel in input data from the camera. Default value
+is 8.
+
+.TP 
+\-\-verbose
+
+Print additional information during program execution.
+.TP 
+\-\-help
+
+Print list of commandline options.
+
+.SH "EXAMPLES"
+.TP 
+pfsinhdrgen sample.hdrgen | pfshdrcreate | pfsview
+
+Create an HDR image from exposures defined in sample.hdrgen using the
+default settings and view it.
+
+.TP 
+pfsinhdrgen sample.hdrgen | pfshdrcreate \-v \-r calibrate \-s response.m \-\-model robertson | pfsview
+
+Recover the response curve from set of exposures defined in
+sample.hdrgen and save it to response.m file. To view the response
+curve, run gnuplot and write 'plot "response.m"'.
+Creates an HDR image using the robertson model.
+
+.TP 
+pfsinhdrgen sample.hdrgen | pfshdrcreate \-v \-f response.m | pfsview
+
+Create an HDR image from exposures defined in sample.hdrgen using the
+response curve "response.m" and view it.
+
+.SH "SEE ALSO"
+.BR pfsinhdrgen (1)
+.BR jpeg2hdrgen (1)
+.BR pfsview (1)
+.BR pfsabsolute (1)
+.SH "BUGS"
+Please report bugs and comments on implementation to 
+Giuseppe Rota <grota@users.sourceforge.net>.

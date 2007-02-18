@@ -1,0 +1,204 @@
+This is a read-me file for PFS CALIBRATION package.  
+-------------------------------------------------------------------
+Copyright (C) 2004 Grzegorz Krawczyk <gkrawczyk@users.sourceforge.net>
+
+Internet: http://www.mpii.mpg.de/resources/hdr/calibration/pfs.html
+
+
+Contents
+---------
+
+1. Compilation
+2. Dependencies
+3. Documentation
+4. Example calibration
+5. Absolute calibration
+6. Contact and Links
+
+       
+1. Compilation
+-------------------------------------------------------------------
+
+1.1 To build from a 'tar' archive:
+
+> ./configure <options>
+
+for example following command will configure PFS tmo to be installed
+in user's 'local/' directory:
+
+> ./configure --prefix=$HOME/local
+
+then compile
+
+> make
+
+and install
+
+> make install
+
+NOTE: When you specify a different compiler using for example
+CXX=g++-3.2, libtool may incorrectly interpret compiler and use gcc
+instead of g++ to link the pfs library. This results in reallocation
+error in programs that link dynamically to that library. This is
+probably a bug in the libtool.
+
+NOTE: Automake 1.6 or later is required!
+        
+1.2 To build from CVS:
+
+> ./reconf
+
+or
+
+> aclocal
+> libtoolize
+> autoheader
+> automake --add-missing
+> autoreconf
+
+then proceed as in the case of the 'tar' archive distribution.
+
+2. Dependencies
+-------------------------------------------------------------------
+
+This package is implemented using floating-point pipe streaming
+implemented in pfstools library. PFStools is a free library and can be
+obtained from: http://www.mpi-sb.mpg.de/resources/pfstools/
+
+3. Documentation
+-------------------------------------------------------------------
+
+Currently no documentation file is available. However each program is
+accompanied with comprehensive manual page and the source code is
+documented in 'doxygen' style.
+
+PFStools library documentation is available at:
+http://www.mpi-inf.mpg.de/resources/pfstools/
+
+
+4. Example calibration
+-------------------------------------------------------------------
+
+Following is an example procedure necessary to perform photometric
+calibration and to create and HDR image. We assume that several jpeg
+images are located in '/var/tmp/images' each named img01.jpg,
+img02.jpg,... img12.jpg. Each image is a shot of exactly the same
+target scene, but taken using different exposure settings (preferably
+different exposure time).
+
+4.1 HDRGEN script
+------------------
+
+First step is to create an hdrgen script:
+$ jpeg2hdrgen /var/tmp/images/img*.jpg > sample.hdrgen
+
+HDRGEN script file is a plain text file in which each line contains:
+<path_to_an_image> <inverse_of_exposure_time_in_seconds> <aperture_size> <iso_speed> 0
+
+In case the jpeg2hdrgen program could not parse the exif information
+from jpeg files, it is necessary to create this file by hand. Below
+are the sample contents of such file:
+
+<--- cut here: sample.hdrgen
+/var/tmp/images/img01.jpg 0.0769231 2.8 100 0
+/var/tmp/images/img02.jpg 0.1 2.8 100 0
+/var/tmp/images/img03.jpg 0.25 2.8 100 0
+/var/tmp/images/img04.jpg 0.3125 2.8 100 0
+/var/tmp/images/img05.jpg 1 2.8 100 0
+/var/tmp/images/img06.jpg 1.25 2.8 100 0
+/var/tmp/images/img07.jpg 3.33333 2.8 100 0
+/var/tmp/images/img08.jpg 4 2.8 100 0
+/var/tmp/images/img09.jpg 58.8235 2.8 100 0
+/var/tmp/images/img10.jpg 76.9231 2.8 100 0
+/var/tmp/images/img11.jpg 322.581 2.8 100 0
+/var/tmp/images/img12.jpg 400 2.8 100 0
+<--- cut here: sample.hdrgen
+
+4.2 Recover of the response curve
+------------------
+
+The next step is to recover the response curve. For detailed
+information refer to manual page of 'pfshdrcalibrate'.
+$ pfsinhdrgen sample.hdrgen | pfshdrcalibrate -v -s camera.response
+
+To view the camera response use GnuPLOT
+$ gnuplot
+gnuplot> plot "camera.response" with dots 
+
+4.3 Apply the response curve (create HDR images)
+------------------
+
+Finally, to create an HDR image and save it in OpenEXR file format use:
+$ pfsinhdrgen sample.hdrgen | pfshdrcalibrate -v -f camera.response | pfsoutexr sample.exr
+
+The image can be viewed using 'exrtools' package:
+$ exrdisplay sample.exr
+
+It is important to note that the response curve can be reused for any
+set of images, as long as they have been taken using the same
+camera. Different white-balance and sensitivity settings may affect
+the quality though.
+
+
+5. Absolute Calibration
+------------------------------------------------------------------
+
+Starting with version 1.3, when used with 8bit images, pfscalibration
+outputs HDR images in which luminance corresponds to real world values
+in [cd/m^2], providing that hdrgen script contained correct
+information on exposure time, aperture and iso speed. Particularly the
+ISO speed is tricky, because camera makers do not adhere precisely to
+the standard. For instance sometimes ISO labelled with 100 is actually
+ISO 80 or ISO 125.
+
+The accuracy of absolute calibration has not been thoroughly tested
+with different camera models, therefore any feedback on achieved
+accuracy will be valueable. Please contact me directly at
+<gkrawczyk@users.sourceforge.net>.
+
+I have tested the software with a Canon EOS 350D camera and achieved
+the following accuracy.
+
+Measurement #1		
+CIE Card    Lum. meter [cd/m2]  HDR Y   Relative Error
+white           26.500          25.913  1.023
+neutral 8       18.900          18.642  1.014
+neutral 6.5     11.700          12.234  0.956
+neutral 5       7.280           7.601   0.958
+neutral 3.5     3.610           3.671   0.983
+black           1.730           1.623   1.066
+
+Measurement #2
+CIE Card    Lum. meter [cd/m2]  HDR Y   Relative Error
+white           0.237           0.247   0.960
+neutral 8       0.162           0.169   0.957
+neutral 6.5     0.099           0.108   0.921
+neutral 5       0.059           0.061   0.967
+neutral 3.5     0.027           0.028   0.981
+black           0.012           0.010   1.218
+
+So, looks like one can expect a relative error in measurements to be
+below 8%. I would appreciate feedback on the results with other
+cameras.
+
+Note: In case of a systematic error in your measurements, try
+adjusting ISO speed. Otherwise you can use pfsabsolute program to get
+a precise match if you know the luminance of a certain area in the HDR
+image.
+			
+
+6. Contact and Links
+-------------------------------------------------------------------
+
+All comments and suggestions concerning this package or implementation
+of particular algorithm are very welcome. Please report bugs and
+comments to Grzegorz Krawczyk <gkrawczyk@users.sourceforge.net>.
+
+PFScalibration package:
+http://www.mpii.mpg.de/resources/hdr/calibration/pfs.html
+
+PFStools library:
+http://www.mpii.mpg.de/resources/pfstools/
+
+PFStmo web-page (a tone mapping library):
+http://www.mpii.mpg.de/resources/tmo/
